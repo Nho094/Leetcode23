@@ -1,53 +1,57 @@
-import sys 
+import sys
+from collections import deque
 
-def solve(): 
+def solve():
     input = sys.stdin.read
     data = input().split()
-
-    if not data: 
-        return 
+    
+    if not data:
+        return
+    
     t = int(data[0])
     idx = 1
+    
     out = []
-    for _ in range(t): 
+    for _ in range(t):
         n = int(data[idx])
-        h = [int(x) for x in data[idx + 1 : idx + 1 + n]]
-        idx += n + 1
-        ans = []
-        for i in range(n): 
-            w = [0] * n
-            
-            # Bước 1: Loang theo chiều kim đồng hồ lấy chặn trên từ tường
-            for step in range(1, n): 
-                curr = (i + step) % n
-                prev = (curr - 1) % n
-                w[curr] = h[prev]
-
-            # Bước 2: Loang ngược chiều kim đồng hồ lấy max có thể giữ
-            for step in range(1, n): 
-                curr = (i - step) % n 
-                w[curr] = max(w[curr], h[curr])
-            
-            # Ép buộc bình i phải trống rỗng
+        h = [int(x) for x in data[idx+1 : idx+1+n]]
+        idx += 1 + n
+        
+        ans = [0] * n
+        
+        # Thử từng bình i làm bình trống
+        for i in range(n):
+            # Khởi tạo mảng lượng nước lớn nhất có thể (vô cùng)
+            w = [float('inf')] * n
             w[i] = 0
             
-            # Bước 3: SỬA LẠI TẠI ĐÂY - Hạ nước xuống nếu vượt quá tường (xuôi)
-            for step in range(1, n): 
-                curr = (i + step) % n
-                prev = (curr - 1) % n 
-                if w[curr] > h[prev]:       # Nếu nước cao hơn tường
-                    w[curr] = w[prev]       # Nước bị tràn và bằng bình trước
-                    
-            # Bước 4: SỬA LẠI TẠI ĐÂY - Hạ nước xuống nếu vượt quá tường (ngược)
-            for step in range(1, n): 
-                curr = (i - step) % n
-                nxt = (curr + 1) % n        # Đổi 'next' thành 'nxt'
-                if w[curr] > h[curr]:       # Nếu nước cao hơn tường
-                    w[curr] = w[nxt]        # Nước bị tràn và bằng bình sau
-                    
-            ans.append(str(sum(w)))
-        out.append(" ".join(ans))
+            # Queue để loang (BFS) cập nhật lại chiều cao nước
+            queue = deque([i])
+            
+            while queue:
+                cur = queue.popleft()
+                
+                # 1. Xét bình bên phải (theo chiều kim đồng hồ)
+                nxt = (cur + 1) % n
+                # Điều kiện: nước ở nxt không được vượt quá max(w[cur], h[cur])
+                limit_right = max(w[cur], h[cur])
+                if w[nxt] > limit_right:
+                    w[nxt] = limit_right
+                    queue.append(nxt)
+                
+                # 2. Xét bình bên trái (ngược chiều kim đồng hồ)
+                prev = (cur - 1 + n) % n
+                # Điều kiện: nước ở prev không được vượt quá max(w[cur], h[prev])
+                limit_left = max(w[cur], h[prev])
+                if w[prev] > limit_left:
+                    w[prev] = limit_left
+                    queue.append(prev)
+            
+            ans[i] = sum(w)
+            
+        out.append(" ".join(map(str, ans)))
+        
     print("\n".join(out))
 
-if __name__ == "__main__": 
+if __name__ == '__main__':
     solve()
